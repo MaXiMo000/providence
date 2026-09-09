@@ -157,6 +157,29 @@ def test_convert_receipt_real_shape_round_trips():
         assert check_bundle(out) == [], check_bundle(out)
 
 
+def test_non_object_top_level_json_is_reported_not_raised():
+    """A malformed or hostile bundle can be valid JSON that isn't an object
+    at all -- a bare list, string, or null. check_bundle's own module
+    docstring promises it never raises on a malformed bundle; this is the
+    shape that used to break that promise with an AttributeError/TypeError
+    instead of a reported issue."""
+    with tempfile.TemporaryDirectory() as d:
+        for content in ("[1, 2, 3]", '"just a string"', "null", "42"):
+            p = pathlib.Path(d) / "bundle.json"
+            p.write_text(content, encoding="utf-8")
+            issues = check_bundle(p)  # must not raise
+            assert issues, f"{content!r} should be flagged, not silently pass"
+
+
+def test_manifest_items_that_are_not_objects_are_reported_not_raised():
+    with tempfile.TemporaryDirectory() as d:
+        manifest = {"providence_version": 1, "generated_at": 1.0, "tool": "test",
+                    "items": [1, "bad", None]}
+        (pathlib.Path(d) / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+        issues = check_bundle(d)  # must not raise
+        assert len(issues) == 3, issues
+
+
 def main():
     tests = [v for k, v in globals().items() if k.startswith("test_") and callable(v)]
     for t in tests:

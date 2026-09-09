@@ -14,7 +14,13 @@ from .spec import PROVIDENCE_VERSION, canonical_hash, file_hash
 REQUIRED_ENVELOPE = ("providence_version", "generated_at", "tool")
 
 
-def _check_envelope(doc: dict, where: str) -> list[str]:
+def _check_envelope(doc, where: str) -> list[str]:
+    if not isinstance(doc, dict):
+        # A hostile or simply broken bundle can be valid JSON that isn't an
+        # object at all -- a bare list, string, number, or null. "Never
+        # raises on a malformed bundle" (this module's own module docstring)
+        # has to cover that shape too, not just a dict missing some keys.
+        return [f"{where}: top-level JSON must be an object, got {type(doc).__name__}"]
     issues = []
     for field in REQUIRED_ENVELOPE:
         if field not in doc:
@@ -35,6 +41,8 @@ def check_single_file(path: pathlib.Path) -> list[str]:
         return [f"{path}: not readable JSON ({exc})"]
 
     issues = _check_envelope(doc, str(path))
+    if not isinstance(doc, dict):
+        return issues  # already reported above; nothing dict-shaped left to check
     if "payload" not in doc:
         issues.append(f"{path}: missing required field 'payload'")
         return issues
@@ -63,6 +71,8 @@ def check_bundle_dir(path: pathlib.Path) -> list[str]:
         return [f"{manifest_path}: not readable JSON ({exc})"]
 
     issues = _check_envelope(doc, str(manifest_path))
+    if not isinstance(doc, dict):
+        return issues  # already reported above; nothing dict-shaped left to check
     items = doc.get("items")
     if not isinstance(items, list):
         issues.append(f"{manifest_path}: missing or non-list 'items'")
@@ -71,6 +81,9 @@ def check_bundle_dir(path: pathlib.Path) -> list[str]:
     seen_ids = set()
     for i, item in enumerate(items):
         where = f"{manifest_path}: items[{i}]"
+        if not isinstance(item, dict):
+            issues.append(f"{where}: must be an object, got {type(item).__name__}")
+            continue
         item_id = item.get("id")
         if not item_id:
             issues.append(f"{where}: missing 'id'")
