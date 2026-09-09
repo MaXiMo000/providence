@@ -1,0 +1,32 @@
+[project]
+name = "providence-evidence"
+version = "0.1.0"
+description = "One versioned bundle shape for content-plus-sha256 evidence, and a checker that catches tampering."
+requires-python = ">=3.10"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+keywords = ["evidence", "verification", "provenance", "schema", "testing"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Software Development :: Quality Assurance",
+]
+# Stdlib only -- hashlib and json are all a hash-and-manifest checker needs.
+dependencies = []
+
+urls.Source = "https://github.com/MaXiMo000/providence"
+
+[project.scripts]
+providence = "providence.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["providence*"]
