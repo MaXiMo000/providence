@@ -63,7 +63,10 @@ manifest was written, not who wrote it or that the manifest itself wasn't
 regenerated from scratch. Not a general JSON-schema validator — it checks
 Providence's specific envelope, nothing about your `payload`'s own shape.
 Not a replacement for `receipt` or `invariant` — see `SPEC.md`'s "Status"
-section for exactly what is and isn't unified today.
+section for exactly what is and isn't unified today. Not a secret
+scanner — a bundle's `payload` validates identically whether it's been
+redacted or not; see SPEC.md's "Redaction and secrets" for whose job
+that actually is.
 
 ## Tests
 

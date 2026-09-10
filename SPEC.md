@@ -93,6 +93,39 @@ A hash mismatch means the content changed after the manifest was written,
 or the manifest was hand-edited to lie about what it covers. Either way,
 conformance checking is what catches it -- that's the entire point.
 
+## Redaction and secrets
+
+Providence proves a bundle wasn't silently edited after it was written. It
+says nothing about whether it was safe to write in the first place --
+`generated_at`/`tool`/`items[].sha256` (or `payload`/`sha256`) are the only
+fields conformance checking ever looks at, and it never opens `payload` or
+an `<id>.json` file's *content* except to hash it. A payload holding a raw
+secret hashes and validates exactly as cleanly as one that's been
+redacted; Providence has no way to tell the difference, and isn't trying
+to.
+
+That responsibility sits with whatever tool builds the payload, before it
+ever reaches Providence's envelope -- and every one of this bundle
+shape's two source tools has already had to learn that the hard way, not
+hypothetically: `receipt` ships `redact.py` (a real credential a wrapped
+command echoed to stdout landed verbatim in a receipt on disk, the first
+time, before it existed) and `invariant`'s `sql` check type redacts a DSN's
+password before it's returned as evidence. Both bugs were found *after*
+each tool already had working conformant output -- proof that "the bundle
+validates" and "the bundle is safe to hand to someone else" are two
+different claims, and only the first one is what `providence check`
+actually makes.
+
+A tool building a Providence bundle should redact secret-shaped content
+in its `payload` (or an `items[]` entry's file) **before** computing the
+sha256 that goes into the envelope, the same way `receipt` and `invariant`
+now do -- redacting after hashing would just make the hash lie about what
+the bundle currently contains. This is a requirement on the producer, not
+something a future version of Providence should try to enforce centrally:
+a generic content-shaped secret scanner is a different, much bigger tool
+than an evidence-envelope spec, and bolting one on here would blur exactly
+the boundary this spec exists to keep clean (see "Status," below).
+
 ## Status: naming, not (yet) building
 
 `receipt` and `invariant` are not required to change what they write.
