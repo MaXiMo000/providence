@@ -54,6 +54,10 @@ Each `items[].sha256` is the sha256 of the **exact on-disk bytes** of
 Providence doesn't standardize what a check result looks like, only how
 it's proven not to have been silently edited.
 
+`id` must be a non-empty string usable as a plain file name: no `/`, `\`,
+`:` or NUL, and not `.` or `..`. A checker must reject any other id rather
+than resolve it, or a manifest could vouch for a file outside the bundle.
+
 ### Single-file form (matches `receipt` today, field names aside)
 
 ```json

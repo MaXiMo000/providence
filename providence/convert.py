@@ -13,7 +13,7 @@ import json
 import pathlib
 import time
 
-from .spec import PROVIDENCE_VERSION, canonical_hash
+from .spec import PROVIDENCE_VERSION, canonical_hash, is_safe_id
 
 
 def convert_invariant(evidence_dir, out_dir) -> pathlib.Path:
@@ -32,6 +32,9 @@ def convert_invariant(evidence_dir, out_dir) -> pathlib.Path:
     items = []
     for check in manifest.get("checks", []):
         name = check["name"]
+        if not is_safe_id(name):
+            raise ValueError(f"check name {name!r} is not a plain file name; refusing to "
+                             "read or write outside the evidence directories")
         src = evidence_dir / f"{name}.json"
         (out_dir / f"{name}.json").write_bytes(src.read_bytes())
         items.append({

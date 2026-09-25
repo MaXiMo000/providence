@@ -180,6 +180,44 @@ def test_manifest_items_that_are_not_objects_are_reported_not_raised():
         assert len(issues) == 3, issues
 
 
+def test_an_id_that_escapes_the_bundle_directory_is_rejected():
+    # A real file outside the bundle, with a correct hash in the manifest:
+    # before the fix this read ../outside/secret.json and reported PASS.
+    with tempfile.TemporaryDirectory() as d:
+        root = pathlib.Path(d)
+        (root / "outside").mkdir()
+        (root / "bundle").mkdir()
+        secret = root / "outside" / "secret.json"
+        secret.write_text('{"x": 1}', encoding="utf-8")
+        import hashlib
+        digest = hashlib.sha256(secret.read_bytes()).hexdigest()
+        for bad_id in ("../outside/secret", str(root / "outside" / "secret"), "..", 7):
+            manifest = {"providence_version": 1, "generated_at": 1.0, "tool": "test",
+                        "items": [{"id": bad_id, "sha256": digest}]}
+            (root / "bundle" / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+            issues = check_bundle(root / "bundle")
+            assert any("plain file name" in i for i in issues), (bad_id, issues)
+
+
+def test_a_symlinked_evidence_file_is_rejected():
+    with tempfile.TemporaryDirectory() as d:
+        root = pathlib.Path(d)
+        (root / "bundle").mkdir()
+        target = root / "elsewhere.json"
+        target.write_text('{"x": 1}', encoding="utf-8")
+        try:
+            (root / "bundle" / "item.json").symlink_to(target)
+        except OSError:
+            print("skip  test_a_symlinked_evidence_file_is_rejected (no symlink permission)")
+            return
+        import hashlib
+        manifest = {"providence_version": 1, "generated_at": 1.0, "tool": "test",
+                    "items": [{"id": "item", "sha256": hashlib.sha256(target.read_bytes()).hexdigest()}]}
+        (root / "bundle" / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+        issues = check_bundle(root / "bundle")
+        assert any("symlink" in i for i in issues), issues
+
+
 def main():
     tests = [v for k, v in globals().items() if k.startswith("test_") and callable(v)]
     for t in tests:
