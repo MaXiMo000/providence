@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import pathlib
 
-from .spec import PROVIDENCE_VERSION, canonical_hash, file_hash
+from .spec import PROVIDENCE_VERSION, canonical_hash, file_hash, is_safe_id
 
 REQUIRED_ENVELOPE = ("providence_version", "generated_at", "tool")
 
@@ -87,6 +87,12 @@ def check_bundle_dir(path: pathlib.Path) -> list[str]:
         item_id = item.get("id")
         if not item_id:
             issues.append(f"{where}: missing 'id'")
+            continue
+        if not is_safe_id(item_id):
+            # The id becomes a filename inside the bundle. "../x" or an
+            # absolute path would make the checker hash a file outside the
+            # bundle and report PASS for evidence the bundle never contained.
+            issues.append(f"{where}: id {item_id!r} is not a plain file name inside the bundle")
             continue
         if item_id in seen_ids:
             issues.append(f"{where}: duplicate id '{item_id}'")
