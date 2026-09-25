@@ -104,6 +104,10 @@ def check_bundle_dir(path: pathlib.Path) -> list[str]:
             continue
 
         evidence_path = path / f"{item_id}.json"
+        if evidence_path.is_symlink():
+            # A bundle vouches for its own bytes; a link can point anywhere.
+            issues.append(f"{where} (id={item_id}): {evidence_path.name} is a symlink, not evidence in the bundle")
+            continue
         if not evidence_path.exists():
             issues.append(f"{where} (id={item_id}): no file {evidence_path.name}")
             continue
