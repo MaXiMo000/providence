@@ -1,14 +1,14 @@
 [project]
 name = "providence-evidence"
-version = "0.1.1"
-description = "One versioned bundle shape for content-plus-sha256 evidence, and a checker that catches tampering."
+version = "0.2.0"
+description = "Deprecated: now part of receipt-evidence. Installs it and keeps old imports working."
 requires-python = ">=3.10"
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
 keywords = ["evidence", "verification", "provenance", "schema", "testing"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 7 - Inactive",
     "Environment :: Console",
     "Intended Audience :: Developers",
     "Operating System :: OS Independent",
@@ -17,12 +17,12 @@ classifiers = [
     "Topic :: Software Development :: Quality Assurance",
 ]
 # Stdlib only -- hashlib and json are all a hash-and-manifest checker needs.
-dependencies = []
+dependencies = ["receipt-evidence>=0.2.0"]
 
 urls.Source = "https://github.com/MaXiMo000/providence"
 
 [project.scripts]
-providence = "providence.cli:main"
+providence = "receipt_evidence.providence.cli:main"
 
 [build-system]
 requires = ["setuptools>=68"]
